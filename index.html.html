@@ -496,6 +496,35 @@
             return clientSLAConfig[clientName] || defaultSLA;
         }
 
+        // AUTO-LOAD Excel file from GitHub on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            autoLoadExcelFromGitHub();
+        });
+
+        async function autoLoadExcelFromGitHub() {
+            try {
+                const excelFileName = 'B2C_Aging_Master_Report.xlsx';
+                const response = await fetch(excelFileName);
+                
+                if (!response.ok) {
+                    console.log('Excel file not found, showing upload interface');
+                    return;
+                }
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                processData(jsonData);
+                document.getElementById('fileName').textContent = `✓ Auto-loaded: ${excelFileName}`;
+                document.getElementById('fileName').style.color = '#48bb78';
+            } catch (error) {
+                console.error('Error loading Excel file:', error);
+            }
+        }
+
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
 
