@@ -480,6 +480,10 @@
     <script>
         let ordersData = [];
 
+        // GOOGLE SHEETS CONFIGURATION
+        const SHEET_ID = '1sDZnjnSUu3nElJ7RIdSs0fZd53p-IAjnc8S9ffZvDDQ';
+        const SHEET_NAME = 'B2C Aging Master'; // Change this if your sheet has a different name
+
         // CLIENT SLA CONFIGURATION
         // Add or modify clients here with their specific SLA cutoff times (in 24-hour format)
         const clientSLAConfig = {
@@ -496,32 +500,42 @@
             return clientSLAConfig[clientName] || defaultSLA;
         }
 
-        // AUTO-LOAD Excel file from GitHub on page load
+        // AUTO-LOAD data from Google Sheets on page load
         window.addEventListener('DOMContentLoaded', () => {
-            autoLoadExcelFromGitHub();
+            autoLoadFromGoogleSheets();
         });
 
-        async function autoLoadExcelFromGitHub() {
+        async function autoLoadFromGoogleSheets() {
             try {
-                const excelFileName = 'B2C_Aging_Master_Report.xlsx';
-                const response = await fetch(excelFileName);
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+                
+                const response = await fetch(url);
                 
                 if (!response.ok) {
-                    console.log('Excel file not found, showing upload interface');
-                    return;
+                    throw new Error('Failed to fetch Google Sheets data');
                 }
                 
-                const arrayBuffer = await response.arrayBuffer();
-                const data = new Uint8Array(arrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                const csvText = await response.text();
                 
-                processData(jsonData);
-                document.getElementById('fileName').textContent = `✓ Auto-loaded: ${excelFileName}`;
-                document.getElementById('fileName').style.color = '#48bb78';
+                Papa.parse(csvText, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        processData(results.data);
+                        document.getElementById('fileName').textContent = '✓ Auto-loaded from Google Sheets';
+                        document.getElementById('fileName').style.color = '#48bb78';
+                    },
+                    error: (error) => {
+                        console.error('Error parsing CSV:', error);
+                        document.getElementById('fileName').textContent = '✗ Error loading from Google Sheets';
+                        document.getElementById('fileName').style.color = '#f56565';
+                    }
+                });
             } catch (error) {
-                console.error('Error loading Excel file:', error);
+                console.error('Error loading from Google Sheets:', error);
+                document.getElementById('fileName').textContent = '✗ Error loading from Google Sheets. You can still upload manually.';
+                document.getElementById('fileName').style.color = '#f56565';
             }
         }
 
