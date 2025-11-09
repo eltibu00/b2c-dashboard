@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2C Order Dashboard - Client & SLA Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .metric-value.success {
+            color: #48bb78;
+        }
+
+        .metric-value.warning {
+            color: #ed8936;
+        }
+
+        .metric-value.danger {
+            color: #f56565;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f7fafc;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e6fffa;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-shipped {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-pulled {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .status-commit {
+            background: #e9d8fd;
+            color: #44337a;
+        }
+
+        .status-committed {
+            background: #e9d8fd;
+            color: #44337a;
+        }
+
+        .status-backorder {
+            background: #fed7e2;
+            color: #702459;
+        }
+
+        .download-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .download-btn:hover {
+            background: #38a169;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .at-risk {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .aged {
+            background: #fef5e7;
+            color: #975a16;
+        }
+
+        #fileName {
+            margin-top: 1rem;
+            color: #48bb78;
+            font-weight: 500;
+        }
+
+        .client-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .client-card {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .client-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .client-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            color: #718096;
+        }
+
+        .client-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .client-stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            line-height: 1.2;
+        }
+
+        .client-stat span:last-child {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a0aec0;
+        }
+
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📦 B2C Order Dashboard</h1>
+        <p>Real-time client order tracking and SLA monitoring | Last updated: <span id="lastUpdate">Never</span></p>
+    </div>
+
+    <div class="container">
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Orders</div>
+                <div class="metric-value" id="totalOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Shipped</div>
+                <div class="metric-value success" id="shippedOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">QC-COMP</div>
+                <div class="metric-value warning" id="qcCompOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Pulled</div>
+                <div class="metric-value" style="color: #4299e1;" id="pulledOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Committed</div>
+                <div class="metric-value" style="color: #9f7aea;" id="committedOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">BackOrder</div>
+                <div class="metric-value" style="color: #d53f8c;" id="backOrderOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">At Risk (Past SLA)</div>
+                <div class="metric-value danger" id="atRiskOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Aged Orders (2+ days)</div>
+                <div class="metric-value danger" id="agedOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Active Clients</div>
+                <div class="metric-value" style="color: #667eea;" id="activeClients">0</div>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="section">
+            <div class="section-title">📁 Drop Your Excel/CSV File Here</div>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📊</div>
+                <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Upload your B2C order data file</p>
+                <p style="color: #718096; font-size: 0.875rem;">Drag and drop or click to browse</p>
+                <input type="file" id="fileInput" accept=".xlsx,.csv" style="display: none;">
+                <button class="btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+            </div>
+            <div id="fileName"></div>
+        </div>
+
+        <!-- Client Breakdown -->
+        <div class="section" id="clientSection" style="display: none;">
+            <div class="section-title">👥 Orders by Client</div>
+            <div class="client-breakdown" id="clientBreakdown"></div>
+        </div>
+
+        <!-- At Risk Orders -->
+        <div class="section" id="atRiskSection" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">⚠️ At Risk Orders (Past Client SLA Cutoff)</div>
+                <button class="download-btn" onclick="downloadAtRiskExcel()">
+                    📥 Download Excel
+                </button>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fed7d7;"></div>
+                    <span>Orders past their client SLA cutoff time (Natura & Granado: 1:00 PM | Others: 2:00 PM)</span>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="atRiskTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Client</th>
+                            <th>SLA Cutoff</th>
+                            <th>Fulfillable Date</th>
+                            <th>Ship By Date</th>
+                            <th>Status</th>
+                            <th>Hours Overdue</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Aged Orders -->
+        <div class="section" id="agedSection" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">📅 Aged Orders by Client (2+ Days Old)</div>
+                <button class="download-btn" onclick="downloadAgedExcel()">
+                    📥 Download Excel
+                </button>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fef5e7;"></div>
+                    <span>Orders older than 2 days from fulfillable date (excludes BackOrder status)</span>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="agedTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Client</th>
+                            <th>Fulfillable Date</th>
+                            <th>Status</th>
+                            <th>Days Old</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- All Orders -->
+        <div class="section" id="ordersSection" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">📋 All Orders</div>
+                <button class="download-btn" onclick="downloadAllOrdersExcel()">
+                    📥 Download Excel
+                </button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Client</th>
+                            <th>Order Date</th>
+                            <th>Fulfillable Date</th>
+                            <th>Ship By Date</th>
+                            <th>Status</th>
+                            <th>Process Code</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script>
+        let ordersData = [];
+
+        // CLIENT SLA CONFIGURATION
+        // Add or modify clients here with their specific SLA cutoff times (in 24-hour format)
+        const clientSLAConfig = {
+            'Natura International, Inc.': { cutoffHour: 13, cutoffMinute: 0 },  // 1:00 PM
+            'Granado, INC.': { cutoffHour: 13, cutoffMinute: 0 },                // 1:00 PM
+            // Default SLA for all other clients is 2:00 PM (14:00)
+            // To add a new client with custom SLA, add a line like:
+            // 'Client Name': { cutoffHour: 13, cutoffMinute: 30 },  // 1:30 PM
+        };
+
+        const defaultSLA = { cutoffHour: 14, cutoffMinute: 0 }; // Default 2:00 PM
+
+        function getClientSLA(clientName) {
+            return clientSLAConfig[clientName] || defaultSLA;
+        }
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            document.getElementById('fileName').textContent = `✓ Loaded: ${file.name}`;
+            
+            const reader = new FileReader();
+            
+            if (file.name.endsWith('.csv')) {
+                reader.onload = (e) => {
+                    Papa.parse(e.target.result, {
+                        header: true,
+                        dynamicTyping: true,
+                        complete: (results) => {
+                            processData(results.data);
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            } else {
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    processData(jsonData);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function processData(data) {
+            ordersData = data.map(order => ({
+                orderId: order['Order ID'],
+                client: order['Client Name'],
+                orderDate: parseDate(order['Order Date']),
+                fulfillableDate: parseDate(order['Fulfillable Date'] || order['Fulfillable Date ']),
+                shipByDate: parseDate(order['Ship By Date']),
+                status: order['Order Status'],
+                processCode: order['Process Code'] || 'N/A',
+                facility: order['Facility'] || 'N/A',
+                pullId: order['Pull ID'] || 'N/A'
+            })).filter(order => order.orderId); // Filter out empty rows
+
+            updateDashboard();
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            
+            // Handle Excel serial dates
+            if (typeof dateStr === 'number') {
+                return new Date((dateStr - 25569) * 86400 * 1000);
+            }
+            
+            return new Date(dateStr);
+        }
+
+        function formatDate(date) {
+            if (!date || isNaN(date.getTime())) return 'N/A';
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function updateDashboard() {
+            const now = new Date();
+            
+            // Calculate metrics
+            const totalOrders = ordersData.length;
+            const shippedOrders = ordersData.filter(o => o.status === 'Shipped').length;
+            const qcCompOrders = ordersData.filter(o => o.status === 'QC-COMP').length;
+            const pulledOrders = ordersData.filter(o => o.status === 'Pulled').length;
+            const committedOrders = ordersData.filter(o => o.status === 'Committed').length;
+            const backOrderOrders = ordersData.filter(o => o.status === 'BackOrder').length;
+            
+            // At Risk: Fulfillable date is before client's SLA cutoff time and not shipped
+            const atRiskOrders = ordersData.filter(order => {
+                if (order.status === 'Shipped') return false;
+                if (!order.fulfillableDate) return false;
+                
+                const sla = getClientSLA(order.client);
+                const cutoffTime = new Date(order.fulfillableDate);
+                cutoffTime.setHours(sla.cutoffHour, sla.cutoffMinute, 0, 0);
+                
+                return now > cutoffTime;
+            });
+            
+            // Aged Orders: 2+ days old from fulfillable date (excluding BackOrder status)
+            const agedOrders = ordersData.filter(order => {
+                if (order.status === 'BackOrder') return false; // Exclude BackOrder from aged calculation
+                if (!order.fulfillableDate) return false;
+                const daysDiff = (now - order.fulfillableDate) / (1000 * 60 * 60 * 24);
+                return daysDiff >= 2;
+            });
+            
+            // Active clients
+            const uniqueClients = [...new Set(ordersData.map(o => o.client))];
+            
+            // Update metrics
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('shippedOrders').textContent = shippedOrders;
+            document.getElementById('qcCompOrders').textContent = qcCompOrders;
+            document.getElementById('pulledOrders').textContent = pulledOrders;
+            document.getElementById('committedOrders').textContent = committedOrders;
+            document.getElementById('backOrderOrders').textContent = backOrderOrders;
+            document.getElementById('atRiskOrders').textContent = atRiskOrders.length;
+            document.getElementById('agedOrders').textContent = agedOrders.length;
+            document.getElementById('activeClients').textContent = uniqueClients.length;
+            document.getElementById('lastUpdate').textContent = now.toLocaleString();
+            
+            // Update client breakdown
+            updateClientBreakdown(uniqueClients);
+            
+            // Update tables
+            updateAtRiskTable(atRiskOrders);
+            updateAgedTable(agedOrders);
+            updateAllOrdersTable();
+            
+            // Show sections
+            document.getElementById('clientSection').style.display = 'block';
+            document.getElementById('atRiskSection').style.display = atRiskOrders.length > 0 ? 'block' : 'none';
+            document.getElementById('agedSection').style.display = agedOrders.length > 0 ? 'block' : 'none';
+            document.getElementById('ordersSection').style.display = 'block';
+        }
+
+        function updateClientBreakdown(clients) {
+            const container = document.getElementById('clientBreakdown');
+            container.innerHTML = '';
+            
+            clients.forEach(client => {
+                const clientOrders = ordersData.filter(o => o.client === client);
+                const shipped = clientOrders.filter(o => o.status === 'Shipped').length;
+                const qcComp = clientOrders.filter(o => o.status === 'QC-COMP').length;
+                const pulled = clientOrders.filter(o => o.status === 'Pulled').length;
+                const committed = clientOrders.filter(o => o.status === 'Committed').length;
+                const backOrder = clientOrders.filter(o => o.status === 'BackOrder').length;
+                const aged = clientOrders.filter(o => {
+                    if (o.status === 'BackOrder') return false; // Exclude BackOrder from aged calculation
+                    if (!o.fulfillableDate) return false;
+                    const daysDiff = (new Date() - o.fulfillableDate) / (1000 * 60 * 60 * 24);
+                    return daysDiff >= 2;
+                }).length;
+                
+                // Get client's SLA
+                const sla = getClientSLA(client);
+                const slaTimeStr = `${sla.cutoffHour.toString().padStart(2, '0')}:${sla.cutoffMinute.toString().padStart(2, '0')}`;
+                
+                const card = document.createElement('div');
+                card.className = 'client-card';
+                card.innerHTML = `
+                    <div class="client-name">${client}</div>
+                    <div style="font-size: 0.75rem; color: #667eea; margin-bottom: 0.75rem;">SLA: ${slaTimeStr}</div>
+                    <div class="client-stats">
+                        <div class="client-stat">
+                            <span class="client-stat-value">${clientOrders.length}</span>
+                            <span>Total</span>
+                        </div>
+                        <div class="client-stat">
+                            <span class="client-stat-value" style="color: #48bb78;">${shipped}</span>
+                            <span>Shipped</span>
+                        </div>
+                        <div class="client-stat">
+                            <span class="client-stat-value" style="color: #ed8936;">${qcComp}</span>
+                            <span>QC-COMP</span>
+                        </div>
+                        <div class="client-stat">
+                            <span class="client-stat-value" style="color: #4299e1;">${pulled}</span>
+                            <span>Pulled</span>
+                        </div>
+                        <div class="client-stat">
+                            <span class="client-stat-value" style="color: #9f7aea;">${committed}</span>
+                            <span>Committed</span>
+                        </div>
+                        <div class="client-stat">
+                            <span class="client-stat-value" style="color: #d53f8c;">${backOrder}</span>
+                            <span>BackOrder</span>
+                        </div>
+                        <div class="client-stat">
+                            <span class="client-stat-value" style="color: #f56565;">${aged}</span>
+                            <span>Aged (2d+)</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateAtRiskTable(orders) {
+            const tbody = document.querySelector('#atRiskTable tbody');
+            tbody.innerHTML = '';
+            
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">✓ No at-risk orders</td></tr>';
+                return;
+            }
+            
+            orders.forEach(order => {
+                const sla = getClientSLA(order.client);
+                const cutoffTime = new Date(order.fulfillableDate);
+                cutoffTime.setHours(sla.cutoffHour, sla.cutoffMinute, 0, 0);
+                const hoursOverdue = Math.floor((new Date() - cutoffTime) / (1000 * 60 * 60));
+                
+                const slaTimeStr = `${sla.cutoffHour.toString().padStart(2, '0')}:${sla.cutoffMinute.toString().padStart(2, '0')}`;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${order.orderId}</strong></td>
+                    <td>${order.client}</td>
+                    <td><span style="font-weight: 600; color: #667eea;">${slaTimeStr}</span></td>
+                    <td>${formatDate(order.fulfillableDate)}</td>
+                    <td>${formatDate(order.shipByDate)}</td>
+                    <td><span class="status-badge at-risk">${order.status}</span></td>
+                    <td style="color: #f56565; font-weight: 600;">${hoursOverdue}h</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateAgedTable(orders) {
+            const tbody = document.querySelector('#agedTable tbody');
+            tbody.innerHTML = '';
+            
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">✓ No aged orders</td></tr>';
+                return;
+            }
+            
+            // Group by client
+            const byClient = {};
+            orders.forEach(order => {
+                if (!byClient[order.client]) byClient[order.client] = [];
+                byClient[order.client].push(order);
+            });
+            
+            Object.keys(byClient).sort().forEach(client => {
+                byClient[client].forEach(order => {
+                    const daysOld = Math.floor((new Date() - order.fulfillableDate) / (1000 * 60 * 60 * 24));
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${order.orderId}</strong></td>
+                        <td>${order.client}</td>
+                        <td>${formatDate(order.fulfillableDate)}</td>
+                        <td><span class="status-badge aged">${order.status}</span></td>
+                        <td style="color: #975a16; font-weight: 600;">${daysOld} days</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
+        function updateAllOrdersTable() {
+            const tbody = document.querySelector('#ordersTable tbody');
+            tbody.innerHTML = '';
+            
+            ordersData.forEach(order => {
+                const row = document.createElement('tr');
+                
+                let statusClass = 'status-pulled';
+                if (order.status === 'Shipped') statusClass = 'status-shipped';
+                if (order.status === 'QC-COMP') statusClass = 'status-qc-comp';
+                if (order.status === 'Committed') statusClass = 'status-committed';
+                if (order.status === 'BackOrder') statusClass = 'status-backorder';
+                if (order.status === 'Pulled') statusClass = 'status-pulled';
+                
+                row.innerHTML = `
+                    <td><strong>${order.orderId}</strong></td>
+                    <td>${order.client}</td>
+                    <td>${formatDate(order.orderDate)}</td>
+                    <td>${formatDate(order.fulfillableDate)}</td>
+                    <td>${formatDate(order.shipByDate)}</td>
+                    <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                    <td>${order.processCode}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Excel Download Functions
+        function downloadAtRiskExcel() {
+            const now = new Date();
+            const atRiskOrders = ordersData.filter(order => {
+                if (order.status === 'Shipped') return false;
+                if (!order.fulfillableDate) return false;
+                
+                const sla = getClientSLA(order.client);
+                const cutoffTime = new Date(order.fulfillableDate);
+                cutoffTime.setHours(sla.cutoffHour, sla.cutoffMinute, 0, 0);
+                
+                return now > cutoffTime;
+            });
+
+            const data = atRiskOrders.map(order => {
+                const sla = getClientSLA(order.client);
+                const cutoffTime = new Date(order.fulfillableDate);
+                cutoffTime.setHours(sla.cutoffHour, sla.cutoffMinute, 0, 0);
+                const hoursOverdue = Math.floor((now - cutoffTime) / (1000 * 60 * 60));
+                const slaTimeStr = `${sla.cutoffHour.toString().padStart(2, '0')}:${sla.cutoffMinute.toString().padStart(2, '0')}`;
+                
+                return {
+                    'Order ID': order.orderId,
+                    'Client': order.client,
+                    'SLA Cutoff Time': slaTimeStr,
+                    'Order Date': formatDateForExcel(order.orderDate),
+                    'Fulfillable Date': formatDateForExcel(order.fulfillableDate),
+                    'Ship By Date': formatDateForExcel(order.shipByDate),
+                    'Status': order.status,
+                    'Hours Overdue': hoursOverdue,
+                    'Process Code': order.processCode,
+                    'Facility': order.facility
+                };
+            });
+
+            downloadExcel(data, 'At_Risk_Orders');
+        }
+
+        function downloadAgedExcel() {
+            const now = new Date();
+            const agedOrders = ordersData.filter(order => {
+                if (order.status === 'BackOrder') return false; // Exclude BackOrder from aged calculation
+                if (!order.fulfillableDate) return false;
+                const daysDiff = (now - order.fulfillableDate) / (1000 * 60 * 60 * 24);
+                return daysDiff >= 2;
+            });
+
+            const data = agedOrders.map(order => {
+                const daysOld = Math.floor((now - order.fulfillableDate) / (1000 * 60 * 60 * 24));
+                
+                return {
+                    'Order ID': order.orderId,
+                    'Client': order.client,
+                    'Order Date': formatDateForExcel(order.orderDate),
+                    'Fulfillable Date': formatDateForExcel(order.fulfillableDate),
+                    'Ship By Date': formatDateForExcel(order.shipByDate),
+                    'Status': order.status,
+                    'Days Old': daysOld,
+                    'Process Code': order.processCode,
+                    'Facility': order.facility
+                };
+            });
+
+            downloadExcel(data, 'Aged_Orders');
+        }
+
+        function downloadAllOrdersExcel() {
+            const data = ordersData.map(order => ({
+                'Order ID': order.orderId,
+                'Client': order.client,
+                'Order Date': formatDateForExcel(order.orderDate),
+                'Fulfillable Date': formatDateForExcel(order.fulfillableDate),
+                'Ship By Date': formatDateForExcel(order.shipByDate),
+                'Status': order.status,
+                'Process Code': order.processCode,
+                'Facility': order.facility,
+                'Pull ID': order.pullId
+            }));
+
+            downloadExcel(data, 'All_Orders');
+        }
+
+        function formatDateForExcel(date) {
+            if (!date || isNaN(date.getTime())) return '';
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function downloadExcel(data, filename) {
+            if (data.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+            
+            // Auto-size columns
+            const colWidths = Object.keys(data[0]).map(key => ({
+                wch: Math.max(key.length, ...data.map(row => String(row[key]).length)) + 2
+            }));
+            ws['!cols'] = colWidths;
+            
+            XLSX.writeFile(wb, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+    </script>
+</body>
+</html>
